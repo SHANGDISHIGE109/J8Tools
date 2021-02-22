@@ -1,0 +1,30 @@
+﻿  Demo3.cpp
+C:\Users\GHOSTSPEED\source\repos\Demo2\Demo2\Demo3.cpp(446,3): warning C4312: “类型强制转换”: 从“int”转换到更大的“HMENU”
+C:\Users\GHOSTSPEED\source\repos\Demo2\Demo2\Demo3.cpp(620,9): warning C4244: “初始化”: 从“LRESULT”转换到“int”，可能丢失数据
+C:\Users\GHOSTSPEED\source\repos\Demo2\Demo2\Demo3.cpp(685,30): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
+C:\Users\GHOSTSPEED\source\repos\Demo2\Demo2\Demo3.cpp(690,54): warning C4267: “参数”: 从“size_t”转换到“int”，可能丢失数据
+C:\Users\GHOSTSPEED\source\repos\Demo2\Demo2\Demo3.cpp(695,54): warning C4267: “参数”: 从“size_t”转换到“int”，可能丢失数据
+C:\Users\GHOSTSPEED\source\repos\Demo2\Demo2\Demo3.cpp(701,53): warning C4267: “参数”: 从“size_t”转换到“int”，可能丢失数据
+C:\Users\GHOSTSPEED\source\repos\Demo2\Demo2\Demo3.cpp(710,14): warning C4244: “初始化”: 从“WPARAM”转换到“int”，可能丢失数据
+C:\Users\GHOSTSPEED\source\repos\Demo2\Demo2\Demo3.cpp(967,10): warning C4244: “初始化”: 从“LONG_PTR”转换到“int”，可能丢失数据
+C:\Users\GHOSTSPEED\source\repos\Demo2\Demo2\Demo3.cpp(986,23): warning C4311: “类型强制转换”: 从“HBRUSH”到“LONG”的指针截断
+C:\Users\GHOSTSPEED\source\repos\Demo2\Demo2\Demo3.cpp(986,23): warning C4302: “类型强制转换”: 从“HBRUSH”到“LONG”截断
+C:\Users\GHOSTSPEED\source\repos\Demo2\Demo2\Demo3.cpp(994,23): warning C4311: “类型强制转换”: 从“HBRUSH”到“LONG”的指针截断
+C:\Users\GHOSTSPEED\source\repos\Demo2\Demo2\Demo3.cpp(994,23): warning C4302: “类型强制转换”: 从“HBRUSH”到“LONG”截断
+C:\Users\GHOSTSPEED\source\repos\Demo2\Demo2\Demo3.cpp(1002,23): warning C4311: “类型强制转换”: 从“HBRUSH”到“LONG”的指针截断
+C:\Users\GHOSTSPEED\source\repos\Demo2\Demo2\Demo3.cpp(1002,23): warning C4302: “类型强制转换”: 从“HBRUSH”到“LONG”截断
+C:\Users\GHOSTSPEED\source\repos\Demo2\Demo2\Demo3.cpp(1014,10): warning C4244: “初始化”: 从“LONG_PTR”转换到“int”，可能丢失数据
+C:\Users\GHOSTSPEED\source\repos\Demo2\Demo2\Demo3.cpp(1025,23): warning C4311: “类型强制转换”: 从“HBRUSH”到“LONG”的指针截断
+C:\Users\GHOSTSPEED\source\repos\Demo2\Demo2\Demo3.cpp(1025,23): warning C4302: “类型强制转换”: 从“HBRUSH”到“LONG”截断
+C:\Users\GHOSTSPEED\source\repos\Demo2\Demo2\Demo3.cpp(1033,23): warning C4311: “类型强制转换”: 从“HBRUSH”到“LONG”的指针截断
+C:\Users\GHOSTSPEED\source\repos\Demo2\Demo2\Demo3.cpp(1033,23): warning C4302: “类型强制转换”: 从“HBRUSH”到“LONG”截断
+C:\Users\GHOSTSPEED\source\repos\Demo2\Demo2\Demo3.cpp(1045,10): warning C4244: “初始化”: 从“LONG_PTR”转换到“int”，可能丢失数据
+C:\Users\GHOSTSPEED\source\repos\Demo2\Demo2\Demo3.cpp(1084,79): warning C4267: “参数”: 从“size_t”转换到“int”，可能丢失数据
+C:\Users\GHOSTSPEED\source\repos\Demo2\Demo2\Demo3.cpp(1096,50): warning C4267: “参数”: 从“size_t”转换到“int”，可能丢失数据
+C:\Users\GHOSTSPEED\source\repos\Demo2\Demo2\Demo3.cpp(1099,23): warning C4311: “类型强制转换”: 从“HBRUSH”到“LONG”的指针截断
+C:\Users\GHOSTSPEED\source\repos\Demo2\Demo2\Demo3.cpp(1099,23): warning C4302: “类型强制转换”: 从“HBRUSH”到“LONG”截断
+C:\Users\GHOSTSPEED\source\repos\Demo2\Demo2\Demo3.cpp(1122,79): warning C4267: “参数”: 从“size_t”转换到“int”，可能丢失数据
+C:\Users\GHOSTSPEED\source\repos\Demo2\Demo2\Demo3.cpp(1134,50): warning C4267: “参数”: 从“size_t”转换到“int”，可能丢失数据
+C:\Users\GHOSTSPEED\source\repos\Demo2\Demo2\Demo3.cpp(1137,23): warning C4311: “类型强制转换”: 从“HBRUSH”到“LONG”的指针截断
+C:\Users\GHOSTSPEED\source\repos\Demo2\Demo2\Demo3.cpp(1137,23): warning C4302: “类型强制转换”: 从“HBRUSH”到“LONG”截断
+  Demo2.vcxproj -> C:\Users\GHOSTSPEED\source\repos\Demo2\x64\Debug\Demo2.exe
