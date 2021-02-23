@@ -62,6 +62,7 @@ GetDlgCtrlID	//通过句柄获取标识符(HMENU)
 #define IDC_SAVEFILEBTN 22/*保存数据到本地 按钮HMENU ID*/
 #define IDC_LOADFILEBTN 23/*打开本地数据载入程序 按钮HMENU ID*/
 #define IDC_ASYNCORSYNCHINT 24/*同步异步状态提示文本HMENU ID*/
+#define IDC_PREPREBTN 900/*预载宏控件起始ID*/
 
 
 //默认宏的起始ID
@@ -70,6 +71,25 @@ GetDlgCtrlID	//通过句柄获取标识符(HMENU)
 //宏可设置的最大数量
 #define MacroKeyMaxNum 128
 
+/*预载宏按钮控件id组*/
+struct IDC_PREBTN
+{
+	int id[MacroKeyMaxNum] = { 900,901,902 };
+	char name[20][MacroKeyMaxNum] = { "赌场转盘","小岛侦察","左键连点" };
+	int last = 2;
+}IDC_PREBTN;
+
+/*预载宏按钮控件信息*/
+struct PreBtnRect
+{
+	int width = 67;/*预载宏按钮控件宽度*/
+	int height = 30;/*预载宏按钮控件高度*/
+	int def_x = 289;/*每行第一个预载宏按钮控件与窗口左边框的x轴距离*/
+	int x = def_x;/*下一个预载宏按钮控件与窗口左边框的x轴距离*/
+	int y = 278;/*当前行预载宏按钮控件与窗口顶边框的y轴距离*/
+	int gap = 6;/*控件间距*/
+	int curlinenum = 0;/*当前行预载宏按钮控件数量，每行至多3个预载宏按钮控件*/
+}prebtnrect;
 
 /*宏的控件组*/
 struct Res_MK_Tr_ID
@@ -83,7 +103,7 @@ struct Res_MK_Tr_ID
 /*宏的控件ID数组*/
 struct MacroKey_Arr_ID
 {
-	Res_MK_Tr_ID ArrID[MacroKeyMaxNum] = {0};
+	Res_MK_Tr_ID ArrID[MacroKeyMaxNum] = { 0 };
 	int last = -1;
 }MKA;
 
@@ -99,7 +119,7 @@ struct ForDxDyPing_ID
 /*鼠标移动控件ID数组*/
 struct ForDxDyPing_Arr_ID
 {
-	ForDxDyPing_ID ArrID[MacroKeyMaxNum] = {0};
+	ForDxDyPing_ID ArrID[MacroKeyMaxNum] = { 0 };
 	int last = -1;
 }FXYPA;
 
@@ -130,7 +150,7 @@ KeyArr T_k;
 /*控件ID数组*/
 struct BoxIDArr
 {
-	HWND IDC[MacroKeyNum];
+	HWND IDC[MacroKeyNum] = {0};
 	int last = -1;
 }RadioBox;
 
@@ -148,14 +168,28 @@ struct Move_Logic_arr
 	F_DxDy_P Logic_Group[MacroKeyMaxNum] = { 0 };
 }MovLogArr;
 
-/*预载宏-start*/
-//赌场转盘
-char preload_gta5_dc_car_keyname[MacroKeyMaxNum][10] = { "Enter", "S" };/*输出到屏幕上的键名组*/
-T_MacroKey_T preload_gta5_dc_car_vk[MacroKeyMaxNum] = { {0, VK_RETURN, 10},  {7700, 'S', 10} };/*宏运行的逻辑组*/
 
-//小岛侦察
-F_DxDy_P preload_gat5_perico_reconnoitre_keyname[MacroKeyMaxNum] = { {50,3000,0,5},{50,-3000,0,5} };
-/*预载宏-end*/
+/*用户载入宏逻辑组*/
+struct Load_Logic_arr
+{																										//赌场转盘												小岛侦察											左键连点
+	Macro_Logic_arr keylist[MacroKeyMaxNum] = { {{ {0, VK_RETURN, 10}, {7700, 'S', 10} }},							{{0}},							{{ {5,VK_LBUTTON,15} }} };/*按钮组的按键宏逻辑组*/
+	Move_Logic_arr movelist[MacroKeyMaxNum] = {								{{ 0 }},						{{ {50,3000,0,5},{50,-3000,0,5} }},						{{ 0 }} };/*按钮组的移动宏逻辑组*/
+	int syncorasync[MacroKeyMaxNum] = { IDC_LOCKASYNC, IDC_LOCKASYNC, IDC_LOCKASYNC };/*按钮组存放的同步或异步按钮控件的标识符*/
+	int last = 2;
+}LoadLogArr;
+///*预载宏-start*/
+////赌场转盘
+//T_MacroKey_T preload_gta5_dc_car_vk[MacroKeyMaxNum] = { {0, VK_RETURN, 10},  {7700, 'S', 10} };/*宏运行的逻辑组*/
+//F_DxDy_P preload_gta5_dc_car_xy[MacroKeyMaxNum] = { 0 };
+//
+////小岛侦察
+//T_MacroKey_T preload_gat5_perico_reconnoitre_vk[MacroKeyMaxNum] = { 0 };
+//F_DxDy_P preload_gat5_perico_reconnoitre_xy[MacroKeyMaxNum] = { {50,3000,0,5},{50,-3000,0,5} };
+//
+////左键连点
+//T_MacroKey_T preload_lbutton_ghostspeed_vk[MacroKeyMaxNum] = { {5,VK_LBUTTON,15} };
+//F_DxDy_P preload_lbutton_ghostspeed_xy[MacroKeyMaxNum] = { 0 };
+///*预载宏-end*/
 
 
 HWND hWnd/*窗口句柄*/,
@@ -273,6 +307,7 @@ int savedatatolocal();
 
 /*载入本地数据*/
 int loadlocaldata();
+
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPreInstance, LPSTR lpCmdLine, int nCmdshow)
 {
@@ -393,9 +428,10 @@ void CreateKeyEdit(HWND hWnd_, LPARAM lParam)
 /*同步异步按钮*/
 void CreateSync(HWND hWnd_, LPARAM lParam)
 {
-	int y1=5,h = MacroKey_h + y1;
-	int x = 226 + 10/*有50的可用宽度 间隔为10*/, y = MacroKey_y , width = 30, height = 100;
-	CreateWindowEx(0, _T("STATIC"), _T("-异步-"), WS_CHILD | WS_VISIBLE | SS_CENTERIMAGE | SS_CENTER, x-5, y1, width+10, h, hWnd_, (HMENU)(IDC_ASYNCORSYNCHINT), ((LPCREATESTRUCT)lParam)->hInstance, NULL);
+	int y1 = 5, h = MacroKey_h + y1;
+	int x = 226 + 10/*有50的可用宽度 间隔为10*/, y = MacroKey_y, width = 30, height = 100;
+	//锁显示文本
+	CreateWindowEx(0, _T("STATIC"), _T("-异步-"), WS_CHILD | WS_VISIBLE | SS_CENTERIMAGE | SS_CENTER, x - 5, y1, width + 10, h, hWnd_, (HMENU)(IDC_ASYNCORSYNCHINT), ((LPCREATESTRUCT)lParam)->hInstance, NULL);
 	CreateWindowEx(0, _T("BUTTON"), _T("同步"), WS_CHILD | WS_VISIBLE | BS_OWNERDRAW, x, y, width, height, hWnd_, (HMENU)(IDC_LOCKSYNC), ((LPCREATESTRUCT)lParam)->hInstance, NULL);
 	y += (height + 10);
 	CreateWindowEx(0, _T("BUTTON"), _T("异步"), WS_CHILD | WS_VISIBLE | BS_OWNERDRAW, x, y, width, height, hWnd_, (HMENU)(IDC_LOCKASYNC), ((LPCREATESTRUCT)lParam)->hInstance, NULL);
@@ -437,23 +473,34 @@ void CreateMouseEdit(HWND hWnd_, LPARAM lParam)
 	}
 }
 
-/*创建预载宏控件*/
-void CreatePreloadMacro(HWND hWnd_, LPARAM lParam, char** preloadarr, int* idc)
+/*创建预载宏按钮控件*/
+void CreatePreloadBTN(HWND hWnd_, int i)
 {
-	int def_x = 290, x = def_x, y = 278, gap = 5, width = 67, height = 30;
-	for (int i = 0;preloadarr[i];i++)
+	//创建一个预载或用户载入按钮控件
+	HWND h_tmp=CreateWindowA("BUTTON", IDC_PREBTN.name[i], WS_CHILD | WS_VISIBLE, prebtnrect.x, prebtnrect.y, prebtnrect.width, prebtnrect.height, hWnd_, (HMENU)IDC_PREBTN.id[i], NULL, NULL);
+
+	SendMessage(h_tmp, WM_SETFONT, (WPARAM)ChFont, NULL);/*设置字体*/
+
+	prebtnrect.x += (prebtnrect.width + prebtnrect.gap);/*设置下一个按钮的x*/
+	prebtnrect.curlinenum++;//当前行按钮数量+1
+	if (prebtnrect.curlinenum % 3 == 0)/*如果当前行满3个按钮 则到下一行*/
 	{
-		CreateWindowA("BUTTON", preloadarr[i], WS_CHILD | WS_VISIBLE, x - 1, y, width, height, hWnd_, (HMENU)idc[i], ((LPCREATESTRUCT)lParam)->hInstance, NULL);
-		x += (width + gap);
-		if ((i + 1) % 3 == 0)
-		{
-			x = def_x;
-			y += (height + gap);
-		}
+		prebtnrect.curlinenum = 0;//重置行的按钮数
+		prebtnrect.x = prebtnrect.def_x;//重置x
+		prebtnrect.y += (prebtnrect.height + prebtnrect.gap);//y增加到下一行
 	}
-	x = def_x, y = 378, gap = 7, width = 102;
+}
+
+/*创建预载宏控件*/
+void CreatePreloadMacro(HWND hWnd_, LPARAM lParam)
+{
+	//int def_x = 290, x = def_x, y = 278, gap = 5, width = 67, height = 30;
+	for (int i = 0;i <= IDC_PREBTN.last;i++)
+		CreatePreloadBTN(hWnd_, i);
+
+	int x = prebtnrect.def_x, y = 398, gap = 7, width = 102, height = 30;
 	CreateWindowEx(0, _T("BUTTON"), _T("保存"), WS_CHILD | WS_VISIBLE, x, y, width, height, hWnd_, (HMENU)IDC_SAVEFILEBTN, ((LPCREATESTRUCT)lParam)->hInstance, NULL);
-	x += (width+gap);
+	x += (width + gap);
 	CreateWindowEx(0, _T("BUTTON"), _T("载入"), WS_CHILD | WS_VISIBLE, x, y, width, height, hWnd_, (HMENU)IDC_LOADFILEBTN, ((LPCREATESTRUCT)lParam)->hInstance, NULL);
 
 }
@@ -491,6 +538,14 @@ LRESULT CALLBACK KeyEditProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 
 		//Pressed_Key_Name返回-1，表示用户所按按键不在程序设计之内，则不改变文本内容
+
+		/*按下为删除键*/
+		if (wParam == VK_DELETE)
+		{
+			TeamKey_Index = -1;
+			SetWindowTextA(hWnd, NULL);
+			break;
+		}
 
 		/*存放按键名*/
 		char str_get[20] = { 0 };
@@ -616,7 +671,7 @@ LRESULT CALLBACK MouseMoveEditProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 	case WM_KEYDOWN:
 	{
 		char key[20] = { '-',0 };
-		int n = 0, m = 0;
+		unsigned __int64 n = 0, m = 0;
 		int k = SendMessage(hWnd, EM_GETSEL, (WPARAM)&n, (LPARAM)&m);/*获取插入符在字符串中的位置*/
 		string prestr, nextstr;/*保存插入位置之前的字符串 和 插入位置之后的字符串*/
 		char str[8];
@@ -652,7 +707,7 @@ LRESULT CALLBACK MouseMoveEditProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 				break;
 			}
 
-			prestr.append(nextstr);
+			prestr.append(nextstr);/*拼接字符串*/
 			const char* str2 = prestr.c_str();
 			SetWindowTextA(hWnd, str2);
 			SendMessage(hWnd, EM_SETSEL, (WPARAM)n - 1, (LPARAM)m - 1);/*设置插入符位置不变*/
@@ -922,15 +977,8 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		/*初始化鼠标移动控件*/
 		CreateMouseEdit(hWnd, lParam);
 		/*初始化预载宏控件*/
-		char* preloadarr[10] = { 0 };
-		int strlength = 20;
-		for (int k = 0;k < 2;k++)
-			preloadarr[k] = new char[strlength];
-		sprintf_s(preloadarr[0], strlength, "%s", "赌场转盘");
-		idc_preloadarr[0] = 901;
-		sprintf_s(preloadarr[1], strlength, "%s", "小岛侦察");
-		idc_preloadarr[1] = idc_preloadarr[0] + 1;
-		CreatePreloadMacro(hWnd, lParam, preloadarr, idc_preloadarr);
+		//Init_pgpreload();
+		CreatePreloadMacro(hWnd, lParam);
 		/*初始化同步异步控件*/
 		CreateSync(hWnd, lParam);
 
@@ -1047,17 +1095,17 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		HDC hdc = (HDC)wParam;
 		switch (id)
 		{
-		//case IDC_UpBTN:
-		//{
-		//	rColor = RGB(255, 0, 0);
-		//	hbrush = CreateSolidBrush(rColor);
-		//	SetBkColor(hdc, rColor);
-		//	char mmp[] = "更新";
-		//	SelectObject(hdc, ChFont);
-		//	TextOutA(hdc, 10, 10, mmp, strlen(mmp));
-		//	return (LONG)hbrush;
-		//	break;
-		//}
+			//case IDC_UpBTN:
+			//{
+			//	rColor = RGB(255, 0, 0);
+			//	hbrush = CreateSolidBrush(rColor);
+			//	SetBkColor(hdc, rColor);
+			//	char mmp[] = "更新";
+			//	SelectObject(hdc, ChFont);
+			//	TextOutA(hdc, 10, 10, mmp, strlen(mmp));
+			//	return (LONG)hbrush;
+			//	break;
+			//}
 		case IDC_LOCKSYNC://1
 		{
 			//HWND hWnd_bro = GetDlgItem(hWnd, IDC_LOCKASYNC);
@@ -1170,52 +1218,52 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		//{
 		//	/*绘制模式切换的边框*/
 		//	ModeBorderPaint(GetDlgItem(hWnd, IDC_MODELEFTBORDER), hdc, RGB(0, 122, 204));
-			ModeBorderPaint(GetDlgItem(hWnd, IDC_MODERIGHTBORDER), hdc, RGB(105, 105, 105));
+		ModeBorderPaint(GetDlgItem(hWnd, IDC_MODERIGHTBORDER), hdc, RGB(105, 105, 105));
 		//}
 		//else
 		//{
-			ModeBorderPaint(GetDlgItem(hWnd, IDC_MODELEFTBORDER), hdc, RGB(105, 105, 105));
-			//ModeBorderPaint(GetDlgItem(hWnd, IDC_MODERIGHTBORDER), hdc, RGB(0, 122, 204));
-		//}
+		ModeBorderPaint(GetDlgItem(hWnd, IDC_MODELEFTBORDER), hdc, RGB(105, 105, 105));
+		//ModeBorderPaint(GetDlgItem(hWnd, IDC_MODERIGHTBORDER), hdc, RGB(0, 122, 204));
+	//}
 
-		//if (lock == 0)
-		//{
-		//	COLORREF rColor = RGB(248, 248, 255);
-		//	HBRUSH hbrush = CreateSolidBrush(rColor);
-		//	LPRECT rec;
+	//if (lock == 0)
+	//{
+	//	COLORREF rColor = RGB(248, 248, 255);
+	//	HBRUSH hbrush = CreateSolidBrush(rColor);
+	//	LPRECT rec;
 
-		//	SelectObject(hdc, hbrush);
-		//	GetProgramPos(GetDlgItem(hWnd, IDC_LOCKSYNC), &rec);
+	//	SelectObject(hdc, hbrush);
+	//	GetProgramPos(GetDlgItem(hWnd, IDC_LOCKSYNC), &rec);
 
-		//	Rectangle(hdc, rec->left, rec->top, rec->right, rec->bottom);
+	//	Rectangle(hdc, rec->left, rec->top, rec->right, rec->bottom);
 
-		//	char mmp[] = "同\n\n步";
-		//	SelectObject(hdc, ChFont);
+	//	char mmp[] = "同\n\n步";
+	//	SelectObject(hdc, ChFont);
 
-		//	RECT r, r2;
-		//	GetClientRect(GetDlgItem(hWnd, IDC_LOCKSYNC), &r);/*获取控件的大小 控件的左上角为0，0*/
+	//	RECT r, r2;
+	//	GetClientRect(GetDlgItem(hWnd, IDC_LOCKSYNC), &r);/*获取控件的大小 控件的左上角为0，0*/
 
-		//	r2 = r;
-		//	DrawTextA(hdc, mmp, strlen(mmp), &r, DT_CENTER | DT_CALCRECT | DT_WORDBREAK);//DT_CALCRECT 计算字符串所占空间并赋值给r
+	//	r2 = r;
+	//	DrawTextA(hdc, mmp, strlen(mmp), &r, DT_CENTER | DT_CALCRECT | DT_WORDBREAK);//DT_CALCRECT 计算字符串所占空间并赋值给r
 
-		//	int h_gap = r2.bottom - r.bottom,//y轴 字符串与矩形内间距
-		//		w_gap = r2.right - r.right;//x轴 字符串与矩形内间距
+	//	int h_gap = r2.bottom - r.bottom,//y轴 字符串与矩形内间距
+	//		w_gap = r2.right - r.right;//x轴 字符串与矩形内间距
 
-		//	if (h_gap > 0 || w_gap)//判断高度和宽度是否超出范围，以免出现负数情况
-		//	{
-		//		r.top += h_gap / 2;
-		//		r.bottom += r.top;
-		//		r.left += w_gap / 2;
-		//		r.right += r.left;
-		//	}
-		//	DrawTextA(hdc, mmp, strlen(mmp), &r, DT_CENTER);
-		//	DeleteObject(hbrush);
-		//	DeleteObject(ChFont);
-		//}
+	//	if (h_gap > 0 || w_gap)//判断高度和宽度是否超出范围，以免出现负数情况
+	//	{
+	//		r.top += h_gap / 2;
+	//		r.bottom += r.top;
+	//		r.left += w_gap / 2;
+	//		r.right += r.left;
+	//	}
+	//	DrawTextA(hdc, mmp, strlen(mmp), &r, DT_CENTER);
+	//	DeleteObject(hbrush);
+	//	DeleteObject(ChFont);
+	//}
 
-		/*绘制模式切换的边框*/
-		//ModeBorderPaint(GetDlgItem(hWnd, IDC_MODELEFTBORDER), RGB(0, 122, 204));
-		//ModeBorderPaint(GetDlgItem(hWnd, IDC_MODERIGHTBORDER), RGB(105, 105, 105));
+	/*绘制模式切换的边框*/
+	//ModeBorderPaint(GetDlgItem(hWnd, IDC_MODELEFTBORDER), RGB(0, 122, 204));
+	//ModeBorderPaint(GetDlgItem(hWnd, IDC_MODERIGHTBORDER), RGB(105, 105, 105));
 
 		ReleaseDC(hWnd, hdc);
 
@@ -1267,8 +1315,69 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case WM_COMMAND:
 	{
 		COLORREF rColor = RGB(248, 248, 255);
+		int low = LOWORD(wParam);
 
-		switch (LOWORD(wParam))
+		/*预载与载入 按钮控件 start*/
+		for (int i = 0;i <= IDC_PREBTN.last;i++)
+		{
+			if (low == IDC_PREBTN.id[i])
+			{
+				/*清除edit控件显示数据*/
+				ClearAllEdit(hWnd);
+
+				/*把逻辑数据写入逻辑运行组*/
+				memcpy_s(KeyLogArr.Logic_Group, sizeof(KeyLogArr.Logic_Group), LoadLogArr.keylist[i].Logic_Group, sizeof(LoadLogArr.keylist[i].Logic_Group));
+				memcpy_s(MovLogArr.Logic_Group, sizeof(MovLogArr.Logic_Group), LoadLogArr.movelist[i].Logic_Group, sizeof(LoadLogArr.movelist[i].Logic_Group));
+
+
+				/*数据输出到edit控件*/
+				char str_p[20] = { 0 };
+				for (int j = 0;j <= MKA.last;j++)
+				{
+					/*如果当前行按键宏与移动宏均为空 则跳过*/
+					if (KeyLogArr.Logic_Group[j].MacroKey != '\0')
+					{
+						/*设置当前行按键宏*/
+						Pressed_Key_Name(KeyLogArr.Logic_Group[j].MacroKey, str_p);/*获取按键名*/
+						SetWindowTextA(MKA.ArrID[j].MacroKey_ID, str_p);/*显示按键名*/
+
+						_itoa_s(KeyLogArr.Logic_Group[j].Response_Time, str_p, sizeof(str_p), 10);/* int转char* */
+						SetWindowTextA(MKA.ArrID[j].Response_ID, str_p);/*显示延迟*/
+
+
+						_itoa_s(KeyLogArr.Logic_Group[j].Trigger_Time, str_p, sizeof(str_p), 10);
+						SetWindowTextA(MKA.ArrID[j].Trigger_ID, str_p);/*显示按下时长*/
+
+					}
+
+
+
+					if (MovLogArr.Logic_Group[j].forTime != '\0')
+					{
+						/*设置当前行移动宏*/
+						//循环
+						_itoa_s(MovLogArr.Logic_Group[j].forTime, str_p, sizeof(str_p), 10);
+						SetWindowTextA(FXYPA.ArrID[j].FOR_ID, str_p);
+						//dx
+						_itoa_s(MovLogArr.Logic_Group[j].dx, str_p, sizeof(str_p), 10);
+						SetWindowTextA(FXYPA.ArrID[j].DX_ID, str_p);
+						//dy
+						_itoa_s(MovLogArr.Logic_Group[j].dy, str_p, sizeof(str_p), 10);
+						SetWindowTextA(FXYPA.ArrID[j].DY_ID, str_p);
+						//延迟
+						_itoa_s(MovLogArr.Logic_Group[j].ping, str_p, sizeof(str_p), 10);
+						SetWindowTextA(FXYPA.ArrID[j].PING_ID, str_p);
+
+					}
+				}
+				/*发送同步或异步按钮单击消息 用户或预载按钮组设置的同步或异步*/
+				SendMessage(hWnd, WM_COMMAND, MAKEWPARAM(LoadLogArr.syncorasync[i], BN_CLICKED), lParam);
+				break;
+			}
+		}
+		/*预载与载入 按钮控件 end*/
+
+		switch (low)
 		{
 		case IDC_UpBTN:
 		{
@@ -1285,7 +1394,7 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 			SetWindowTextA(hWnd, xy);
 
-			
+
 			/*获取宏数据*/
 			getmacrodata();
 
@@ -1336,7 +1445,7 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		{
 			lock = 1;
 
-			SetWindowTextA(GetDlgItem(hWnd, IDC_ASYNCORSYNCHINT),"-同步-");
+			SetWindowTextA(GetDlgItem(hWnd, IDC_ASYNCORSYNCHINT), "-同步-");
 			break;
 		}
 
@@ -1355,12 +1464,12 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 		case IDC_SAVEFILEBTN:/*保存*/
 		{
-			int flag=GetSaveFileNameA(&op);
+			int flag = GetSaveFileNameA(&op);
 			if (flag)//保存(1)-取消(0)
 			{
 				if (savedatatolocal())
-					MessageBox(hWnd, _T("提示"), _T("保存成功"), 0);
-				else MessageBox(hWnd, _T("错误"), _T("没有数据需要保存"), 0);
+					MessageBox(hWnd, _T("保存成功"), _T("提示"), 0);
+				else MessageBox(hWnd, _T("没有数据需要保存"), _T("错误"), 0);
 
 				//ofstream fout(op.lpstrFile);
 				//fout << "123" << endl;
@@ -1379,75 +1488,12 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		{
 			if (GetOpenFileNameA(&op))
 			{
-				if(loadlocaldata())
-					MessageBox(hWnd, _T("提示"), _T("载入成功"), 0);
+				if (loadlocaldata())
+					MessageBox(hWnd, _T("载入成功"), _T("提示"), 0);
 				else MessageBox(hWnd, _T("文件打开失败"), _T("错误"), 0);
 			}
 			break;
 		}
-
-		/*预载宏按钮组-start*/
-		case 901://赌场转盘
-		{
-			/*删除edit控件显示数据*/
-			ClearAllEdit(hWnd);
-
-			/*设置逻辑组*/
-			//内存复制
-			memcpy(KeyLogArr.Logic_Group, preload_gta5_dc_car_vk, sizeof(preload_gta5_dc_car_vk));
-			//清除不用的逻辑组
-			for (int i = 0;i < (int)MacroKeyMaxNum;i++)
-				MovLogArr.Logic_Group[i].forTime = { 0 };
-
-			char str_p[10];
-			/*将按键名输出到edit控件上*/
-			for (int i = 0;preload_gta5_dc_car_keyname[i][0];i++)
-			{
-				_itoa_s(preload_gta5_dc_car_vk[i].Response_Time, str_p, sizeof(str_p), 10);/* int转char* */
-				SetWindowTextA(MKA.ArrID[i].Response_ID, str_p);/*显示延迟*/
-				SetWindowTextA(MKA.ArrID[i].MacroKey_ID, preload_gta5_dc_car_keyname[i]);/*显示按键名*/
-				_itoa_s(preload_gta5_dc_car_vk[i].Trigger_Time, str_p, sizeof(str_p), 10);
-				SetWindowTextA(MKA.ArrID[i].Trigger_ID, str_p);
-			}
-			/*设置触发键*/
-			T_k.vk_code[0] = VK_XBUTTON1;
-			T_k.last = 0;
-			SetWindowTextA(hWndtrigger, "XBUTTON1");
-
-			break;
-		}
-		case 902://小岛侦察
-		{
-			/*删除原有数据*/
-			ClearAllEdit(hWnd);
-
-			/*设置逻辑组*/
-			//内存复制
-			memcpy(MovLogArr.Logic_Group, preload_gat5_perico_reconnoitre_keyname, sizeof(preload_gat5_perico_reconnoitre_keyname));
-			//清除不用的逻辑组
-			for (int i = 0;i < (int)MacroKeyMaxNum;i++)
-				KeyLogArr.Logic_Group[i].MacroKey = { 0 };
-
-			char str_p[10];
-			/*将按键名输出到edit控件上*/
-			for (int i = 0;preload_gat5_perico_reconnoitre_keyname[i].forTime;i++)
-			{
-				//循环
-				_itoa_s(preload_gat5_perico_reconnoitre_keyname[i].forTime, str_p, sizeof(str_p), 10);
-				SetWindowTextA(FXYPA.ArrID[i].FOR_ID, str_p);
-				//dx
-				_itoa_s(preload_gat5_perico_reconnoitre_keyname[i].dx, str_p, sizeof(str_p), 10);
-				SetWindowTextA(FXYPA.ArrID[i].DX_ID, str_p);
-				//dy
-				_itoa_s(preload_gat5_perico_reconnoitre_keyname[i].dy, str_p, sizeof(str_p), 10);
-				SetWindowTextA(FXYPA.ArrID[i].DY_ID, str_p);
-				//延迟
-				_itoa_s(preload_gat5_perico_reconnoitre_keyname[i].ping, str_p, sizeof(str_p), 10);
-				SetWindowTextA(FXYPA.ArrID[i].PING_ID, str_p);
-			}
-			break;
-		}
-		/*预载宏按钮组-end*/
 
 		case 1007:/*单选框“按住运行”被单击时*/
 		{
@@ -1739,7 +1785,7 @@ char** str_qie(char* str, char* CutSymbol)/*参数1-待切字符串  参数2-分
 	for (i = 0;i < 5;i++)
 		strlist[i] = new char[len];
 	i = 0;
-	char* buf;//用来在strtok_s内部保存切分时的上下文，以应对连续调用分解相同源字符串
+	char* buf = { 0 };//用来在strtok_s内部保存切分时的上下文，以应对连续调用分解相同源字符串
 
 	//分割出的子字符串赋给substr
 	char* substr = strtok_s(str, CutSymbol, &buf);/*利用现成的分割函数,substr为分割出来的子字符串*/
@@ -1834,7 +1880,7 @@ void  Delay(int time)//time为毫秒数
 {
 	clock_t now = clock();
 
-	while (clock() - now < time  && se);
+	while (clock() - now < time && se);
 }
 
 /*宏运行*/
@@ -1972,7 +2018,7 @@ int MoveModeCheck()
 					p = 0;
 				}
 				int j, k = MovLogArr.Logic_Group[i].forTime;
-				for (j = 0;j < k && se==1;j++)
+				for (j = 0;j < k && se == 1;j++)
 				{
 					if (!(power && g && mode == 1))
 						break;
@@ -2018,7 +2064,7 @@ int MoveModeCheck()
 			while (power && KeyDownForWhat(&T_k) == 1 && se)/*判断触发组合键是否按下*/
 			{
 				int j, k = MovLogArr.Logic_Group[i].forTime;
-				for (j = 0;j < k && se==1;j++)
+				for (j = 0;j < k && se == 1;j++)
 				{
 					if (!(power && KeyDownForWhat(&T_k) == 1) || ((mode + 1) % 2) == 0)
 						break;
@@ -2096,13 +2142,6 @@ void ModeBorderPaint(HWND hWnd_, HDC hdc, COLORREF rColor)
 		rColor);/*指定的样式、宽度和颜色创建画笔*/
 	SelectObject(hdc, hPen);/*选择hPen到指定的设备上下文环境中，该新对象替换先前的相同类型的对象*/
 
-	//GetWindowRect(hWnd, &prerc);
-	//GetWindowRect(hWnd_, &childrc);
-
-	//int left = childrc.left - prerc.left - 8,
-	//	top = childrc.top - prerc.top - 31,
-	//	right = childrc.right - childrc.left + left,
-	//	bottom = childrc.bottom - prerc.top - 31;
 
 	LPRECT r = NULL;
 	GetProgramPos(hWnd_, &r);
@@ -2120,25 +2159,21 @@ void opfileinit(HWND hWnd_, LPOPENFILENAMEA lpofn)
 
 	GetModuleFileNameA(NULL, strInitialDir, MAX_PATH);
 	string s_tmp = strInitialDir;
-	regex r(".+\\\\+");
-	smatch m;
-	regex_search(s_tmp, m, r);
-	r=(".+\\w+");
-	s_tmp = m.str(0);
-	regex_search(s_tmp, m, r);
-	sprintf_s(strInitialDir, sizeof(strInitialDir), m.str(0).data());
+	regex r("(.*)(?:\\\\.*)");
+	s_tmp = regex_replace(s_tmp, r, "$1");//获取捕获分组1 当前应用程序所在路径
+	sprintf_s(strInitialDir, sizeof(strInitialDir), s_tmp.data());
 
 	lpofn->lStructSize = sizeof(OPENFILENAME);
 	lpofn->hwndOwner = hWnd_;// 指定它的父窗口
 	lpofn->hInstance = NULL;
 	lpofn->lpstrFilter = "Text File(.txt)\0*.txt\0All File(.*)\0*.*\0\0";//设置过滤器
 	lpofn->lpstrCustomFilter = NULL;
-	lpofn->nMaxCustFilter = NULL;/*缓冲区大小*/
+	lpofn->nMaxCustFilter = NULL;/*上面缓冲区大小*/
 	lpofn->nFilterIndex = 0;
 	lpofn->lpstrFile = strFile;//初始化文件名编辑控件的文件名,包含驱动器标识符，路径，文件名和所选文件的扩展名
 	lpofn->nMaxFile = MAX_PATH;//指向的缓冲区的大小（以字符为单位）,缓冲区必须足够大以存储路径和文件名字符串，包括终止NULL字符
-	lpofn->lpstrFileTitle = strFileTitle;
-	lpofn->nMaxFileTitle = MAX_PATH;//所选文件的文件名和扩展名（无路径信息）
+	lpofn->lpstrFileTitle = strFileTitle;//所选文件的文件名和扩展名（无路径信息）
+	lpofn->nMaxFileTitle = MAX_PATH;/*上面缓冲区大小*/
 	lpofn->lpstrInitialDir = strInitialDir;//初始目录 NULL为“我的文档”
 	lpofn->lpstrTitle = NULL;
 	lpofn->Flags = 0;
@@ -2157,7 +2192,7 @@ int getmacrodata()
 	/*获取宏的设置*/
 	for (int i = 0;i < (int)MacroKeyMaxNum;i++)
 	{
-		if (MKA.ArrID[i].MacroKey_ID==NULL) break;
+		//if (MKA.ArrID[i].MacroKey_ID == NULL) break;
 
 		char strText1[20], strText2[20], strText3[20], strText4[20];
 
@@ -2235,15 +2270,19 @@ int getmacrodata()
 int savedatatolocal()
 {
 	char gap[] = ",";
-	int f=getmacrodata();
+	int f = getmacrodata();
 	if (f == 0) return 0;
 	ofstream fout(op.lpstrFile);//创建一个文件输出流对象fout来打开文件 
+	if (lock == 0)/*0为异步*/
+		fout << "#ASYNC" << endl;
+	else fout << "#SYNC" << endl;
+
 	fout /*<< "#Start\n"*/ << "#Key-S" << endl;
 	for (int i = 0;MKA.ArrID[i].MacroKey_ID;i++)
 	{
-		if (f != 1 && f != 3) break;
-		if (KeyLogArr.Logic_Group[i].MacroKey == -1 || KeyLogArr.Logic_Group[i].MacroKey == '\0')
-			continue;
+		if (f != 1 && f != 3) break;//1表示只有按键宏设有键 3表示按键宏与移动宏都设有键
+		//if (KeyLogArr.Logic_Group[i].MacroKey == -1 || KeyLogArr.Logic_Group[i].MacroKey == '\0')
+		//	continue;
 		fout << KeyLogArr.Logic_Group[i].Response_Time << gap
 			<< KeyLogArr.Logic_Group[i].MacroKey << gap
 			<< KeyLogArr.Logic_Group[i].Trigger_Time << endl;
@@ -2251,9 +2290,9 @@ int savedatatolocal()
 	fout << "#Key-E\n#Mouse-S" << endl;
 	for (int i = 0;MKA.ArrID[i].MacroKey_ID;i++)
 	{
-		if (f != 2&& f != 3) break;
-		if (MovLogArr.Logic_Group[i].forTime == '\0')
-			continue;
+		if (f != 2 && f != 3) break;//2表示只有移动宏设有键 3表示按键宏与移动宏都设有键
+		//if (MovLogArr.Logic_Group[i].forTime == '\0')
+		//	continue;
 		fout << MovLogArr.Logic_Group[i].forTime << gap
 			<< MovLogArr.Logic_Group[i].dx << gap
 			<< MovLogArr.Logic_Group[i].dy << gap
@@ -2274,6 +2313,17 @@ int loadlocaldata()
 		fin.close();
 		return 0;
 	}
+
+	char btnname[50];
+	sprintf_s(btnname, sizeof(btnname), op.lpstrFileTitle);/*把文件名+扩展名写入缓冲区*/
+	string b_tmp = btnname;
+	regex r("(.*)(?:\\..*)");
+	b_tmp = regex_replace(b_tmp, r, "$1");/*获取捕获分组1 文件名*/
+	//IDC_PREBTN.name[++IDC_PREBTN.last] = new char[8];/*设置按钮文本 并让预载宏控件id组长度+1*/
+	sprintf_s(IDC_PREBTN.name[++IDC_PREBTN.last], sizeof(IDC_PREBTN.name[IDC_PREBTN.last]), b_tmp.data());
+	//设置新增的按钮控件的标识符为上一个按钮控件的标识符+1
+	IDC_PREBTN.id[IDC_PREBTN.last] = IDC_PREBTN.id[IDC_PREBTN.last - 1] + 1;
+
 	char strline[50] = { 0 };
 	int flag = 0, i = 0;
 	fin.getline(strline, sizeof(strline));
@@ -2284,63 +2334,82 @@ int loadlocaldata()
 		{
 			flag = 1;
 			fin.getline(strline, sizeof(strline));
-			continue;
+			//continue;
 		}
-		else if (flag == 1 && !strcmp(strline, "#Key-E"))
+		if (flag == 1 && !strcmp(strline, "#Key-E"))
 		{
 			flag = 0;
 			i = 0;
 			fin.getline(strline, sizeof(strline));
-			continue;
+			//continue;
 		}
-		else if (flag == 0 && !strcmp(strline, "#Mouse-S"))
+		if (flag == 0 && !strcmp(strline, "#Mouse-S"))
 		{
 			flag = 2;
 			fin.getline(strline, sizeof(strline));
-			continue;
+			//continue;
 		}
-		else if (flag == 2 && !strcmp(strline, "#Mouse-E"))
+		if (flag == 2 && !strcmp(strline, "#Mouse-E"))
 		{
 			flag = 0;
 			i = 0;
+			CreatePreloadBTN(::hWnd, IDC_PREBTN.last);
 			break;
 		}
+		if (!strcmp(strline, "#ASYNC"))
+			LoadLogArr.syncorasync[++LoadLogArr.last] = IDC_LOCKASYNC;
+		else if (!strcmp(strline, "#SYNC"))
+			LoadLogArr.syncorasync[++LoadLogArr.last] = IDC_LOCKSYNC;
+
 		if (flag == 1)//载入按键宏
 		{
-			char **macro = str_qie(strline, gap);
-			//载入响应时间
-			KeyLogArr.Logic_Group[i].Response_Time = atoi(macro[0]);
-			SetWindowTextA(MKA.ArrID[i].Response_ID, macro[0]);//输出到edit控件
+			/*拆分数据*/
+			char** macro = str_qie(strline, gap);
+			int mk = atoi(macro[1]);
+			if (mk != '\0' && mk != -1)
+			{
+				//载入响应时间
+				LoadLogArr.keylist[LoadLogArr.last].Logic_Group[i].Response_Time = atoi(macro[0]);
+				//SetWindowTextA(MKA.ArrID[i].Response_ID, macro[0]);//输出到edit控件
 
-			//载入按键宏
-			KeyLogArr.Logic_Group[i].MacroKey = atoi(macro[1]);
-			Pressed_Key_Name(atoi(macro[1]), strline);
-			SetWindowTextA(MKA.ArrID[i].MacroKey_ID, strline);//输出按键名到edit控件
+				//载入按键宏
+				LoadLogArr.keylist[LoadLogArr.last].Logic_Group[i].MacroKey = atoi(macro[1]);
+				Pressed_Key_Name(atoi(macro[1]), strline);
+				//SetWindowTextA(MKA.ArrID[i].MacroKey_ID, strline);//输出按键名到edit控件
 
-			//载入触发时长
-			KeyLogArr.Logic_Group[i].Trigger_Time = atoi(macro[2]);
-			SetWindowTextA(MKA.ArrID[i].Trigger_ID, macro[2]);//输出触发时长到edit控件
+				//载入触发时长
+				LoadLogArr.keylist[LoadLogArr.last].Logic_Group[i].Trigger_Time = atoi(macro[2]);
+				//SetWindowTextA(MKA.ArrID[i].Trigger_ID, macro[2]);//输出触发时长到edit控件
+
+			}
+
 
 			i++;
 		}
-		if (flag == 2)//载入鼠标移动宏
+		else if (flag == 2)//载入鼠标移动宏
 		{
 			char** move = str_qie(strline, gap);
-			//载入循环次数
-			MovLogArr.Logic_Group[i].forTime = atoi(move[0]);
-			SetWindowTextA(FXYPA.ArrID[i].FOR_ID, move[0]);//输出循环次数到edit控件
+			int ft = atoi(move[0]);
+			if (ft != '\0' && ft != 0)
+			{
+				//载入循环次数
+				LoadLogArr.movelist[LoadLogArr.last].Logic_Group[i].forTime = ft;
+				//SetWindowTextA(FXYPA.ArrID[i].FOR_ID, move[0]);//输出循环次数到edit控件
 
-			//载入dx x轴位移量
-			MovLogArr.Logic_Group[i].dx = atoi(move[1]);
-			SetWindowTextA(FXYPA.ArrID[i].DX_ID, move[1]);//输出dy到edit控件
+				//载入dx x轴位移量
+				LoadLogArr.movelist[LoadLogArr.last].Logic_Group[i].dx = atoi(move[1]);
+				//SetWindowTextA(FXYPA.ArrID[i].DX_ID, move[1]);//输出dy到edit控件
 
-			//载入dy y轴位移量
-			MovLogArr.Logic_Group[i].dy = atoi(move[2]);
-			SetWindowTextA(FXYPA.ArrID[i].DY_ID, move[2]);//输出dy到edit控件
+				//载入dy y轴位移量
+				LoadLogArr.movelist[LoadLogArr.last].Logic_Group[i].dy = atoi(move[2]);
+				//SetWindowTextA(FXYPA.ArrID[i].DY_ID, move[2]);//输出dy到edit控件
 
-			////载入延迟ping
-			MovLogArr.Logic_Group[i].ping = atoi(move[3]);
-			SetWindowTextA(FXYPA.ArrID[i].PING_ID, move[3]);//输出延迟到edit控件
+				////载入延迟ping
+				LoadLogArr.movelist[LoadLogArr.last].Logic_Group[i].ping = atoi(move[3]);
+				//SetWindowTextA(FXYPA.ArrID[i].PING_ID, move[3]);//输出延迟到edit控件
+
+			}
+
 
 			i++;
 		}
@@ -2349,48 +2418,4 @@ int loadlocaldata()
 	fin.close();
 	return 1;
 }
-
-//int LD()
-//{
-//	int i;
-//	while (se)/*线程开关*/
-//	{
-//		i = 0;
-//		/*power 热键功能是否启动 */
-//		while (power && KeyDownForWhat(&T_k) == 1)/*判断触发组合键是否按下*/
-//		{
-//
-//			/* 跳过没有设定宏的编辑框*/
-//			if (KeyLogArr.Logic_Group[i].MacroKey == -1 || KeyLogArr.Logic_Group[i].MacroKey == '\0')
-//			{
-//				(++i) %= (MKA.last + 1);
-//				continue;
-//			}
-//
-//			//宏响应延迟
-//			Delay(KeyLogArr.Logic_Group[i].Response_Time);
-//			// mouse_event(MOUSEEVENTF_LEFTDOWN | MOUSEEVENTF_LEFTUP, 0, 0, 0, 0);
-//			int* km = KeyOrMouse(KeyLogArr.Logic_Group[i].MacroKey);
-//			if (km[0] == 1)
-//			{
-//				//按下设定的宏按键
-//				keybd_event(KeyLogArr.Logic_Group[i].MacroKey, MapVirtualKey(KeyLogArr.Logic_Group[i].MacroKey, 0), 0, 0);
-//				//宏的按下时长
-//				Delay(KeyLogArr.Logic_Group[i].Trigger_Time);
-//				//弹起设定的宏按键
-//				keybd_event(KeyLogArr.Logic_Group[i].MacroKey, MapVirtualKey(KeyLogArr.Logic_Group[i].MacroKey, 0), KEYEVENTF_KEYUP, 0);
-//			}
-//			else
-//			{
-//				mouse_event(km[1], 0, 0, 0, 0);
-//				Delay(KeyLogArr.Logic_Group[i].Trigger_Time);
-//				mouse_event(km[2], 0, 0, 0, 0);
-//				//mouse_event(MOUSEEVENTF_MIDDLEDOWN | MOUSEEVENTF_MIDDLEUP, 0, 0, 0, 0);
-//				//mouse_event(MOUSEEVENTF_RIGHTDOWN | MOUSEEVENTF_RIGHTUP, 0, 0, 0, 0);
-//			}
-//			(++i) %= (MKA.last + 1);
-//		}
-//	}
-//	return 0;
-//}
 
