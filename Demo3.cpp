@@ -8,6 +8,7 @@
 #include <windowsx.h>
 #include <fstream>
 #include <regex>
+#include "Resource.h"
 //#include <afxwin.h>
 using namespace std;
 //gcc/g++ demo3.cpp -o Demo3 -mwindows
@@ -150,7 +151,7 @@ KeyArr T_k;
 /*控件ID数组*/
 struct BoxIDArr
 {
-	HWND IDC[MacroKeyNum] = {0};
+	HWND IDC[MacroKeyNum] = { 0 };
 	int last = -1;
 }RadioBox;
 
@@ -173,7 +174,7 @@ struct Move_Logic_arr
 struct Load_Logic_arr
 {																										//赌场转盘												小岛侦察											左键连点
 	Macro_Logic_arr keylist[MacroKeyMaxNum] = { {{ {0, VK_RETURN, 10}, {7700, 'S', 10} }},							{{0}},							{{ {5,VK_LBUTTON,15} }} };/*按钮组的按键宏逻辑组*/
-	Move_Logic_arr movelist[MacroKeyMaxNum] = {								{{ 0 }},						{{ {50,3000,0,5},{50,-3000,0,5} }},						{{ 0 }} };/*按钮组的移动宏逻辑组*/
+	Move_Logic_arr movelist[MacroKeyMaxNum] = { {{ 0 }},						{{ {50,3000,0,5},{50,-3000,0,5} }},						{{ 0 }} };/*按钮组的移动宏逻辑组*/
 	int syncorasync[MacroKeyMaxNum] = { IDC_LOCKASYNC, IDC_LOCKASYNC, IDC_LOCKASYNC };/*按钮组存放的同步或异步按钮控件的标识符*/
 	int last = 2;
 }LoadLogArr;
@@ -246,6 +247,8 @@ LRESULT CALLBACK KeyEditProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 /*鼠标移动的dx，dy控件处理函数*/
 LRESULT CALLBACK MouseMoveEditProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
+/*切换按钮处理函数*/
+LRESULT CALLBACK ChangeBtnProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 //获取按下的键名
 int Pressed_Key_Name(int VK_CODE, char* getname);
@@ -316,6 +319,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPreInstance, LPSTR lpCmdLine,
 	WNDCLASS wndClass = { 0 };
 	wndClass.hbrBackground = (HBRUSH)GetStockObject(WHITE_BRUSH);//加载白色画刷背景
 	wndClass.hCursor = LoadCursor(NULL, IDC_ARROW);//加载系统默认光标
+	wndClass.hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_DEMO2));
 	wndClass.hInstance = hInstance;//当前应用程序实例句柄
 	wndClass.lpfnWndProc = WindowProc;//窗口处理函数
 	wndClass.lpszClassName = szAppClassName;//窗口类型名
@@ -435,7 +439,6 @@ void CreateSync(HWND hWnd_, LPARAM lParam)
 	CreateWindowEx(0, _T("BUTTON"), _T("同步"), WS_CHILD | WS_VISIBLE | BS_OWNERDRAW, x, y, width, height, hWnd_, (HMENU)(IDC_LOCKSYNC), ((LPCREATESTRUCT)lParam)->hInstance, NULL);
 	y += (height + 10);
 	CreateWindowEx(0, _T("BUTTON"), _T("异步"), WS_CHILD | WS_VISIBLE | BS_OWNERDRAW, x, y, width, height, hWnd_, (HMENU)(IDC_LOCKASYNC), ((LPCREATESTRUCT)lParam)->hInstance, NULL);
-
 }
 
 /*创建鼠标移动控件*/
@@ -477,7 +480,7 @@ void CreateMouseEdit(HWND hWnd_, LPARAM lParam)
 void CreatePreloadBTN(HWND hWnd_, int i)
 {
 	//创建一个预载或用户载入按钮控件
-	HWND h_tmp=CreateWindowA("BUTTON", IDC_PREBTN.name[i], WS_CHILD | WS_VISIBLE, prebtnrect.x, prebtnrect.y, prebtnrect.width, prebtnrect.height, hWnd_, (HMENU)IDC_PREBTN.id[i], NULL, NULL);
+	HWND h_tmp = CreateWindowA("BUTTON", IDC_PREBTN.name[i], WS_CHILD | WS_VISIBLE, prebtnrect.x, prebtnrect.y, prebtnrect.width, prebtnrect.height, hWnd_, (HMENU)IDC_PREBTN.id[i], NULL, NULL);
 
 	SendMessage(h_tmp, WM_SETFONT, (WPARAM)ChFont, NULL);/*设置字体*/
 
@@ -504,6 +507,7 @@ void CreatePreloadMacro(HWND hWnd_, LPARAM lParam)
 	CreateWindowEx(0, _T("BUTTON"), _T("载入"), WS_CHILD | WS_VISIBLE, x, y, width, height, hWnd_, (HMENU)IDC_LOADFILEBTN, ((LPCREATESTRUCT)lParam)->hInstance, NULL);
 
 }
+
 
 
 /*间隔符*/
@@ -544,13 +548,18 @@ LRESULT CALLBACK KeyEditProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		{
 			TeamKey_Index = -1;
 			SetWindowTextA(hWnd, NULL);
+			int t;
+			for (t = 0;MKA.ArrID[t].MacroKey_ID != hWnd;t++);
+			SetWindowTextA(MKA.ArrID[t].Response_ID, NULL);
+			SetWindowTextA(MKA.ArrID[t].Trigger_ID, NULL);
 			break;
 		}
 
 		/*存放按键名*/
 		char str_get[20] = { 0 };
 
-		int x = Pressed_Key_Name((int)toascii(wParam), str_get);/*获取按键名 并返回按键类型值*/
+		int x = Pressed_Key_Name((int)(wParam), str_get);/*获取按键名 并返回按键类型值*/
+
 
 		/*判断按下按键是否在程序设计之外*/
 		if (x == -1)
@@ -560,9 +569,18 @@ LRESULT CALLBACK KeyEditProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			break;
 		}
 
+		/*按键宏输入框暂不支持组合键*/
+		if (GetDlgCtrlID(hWnd) == IDC_MacroKey)
+		{
+			TeamKey_Index = -1;
+			MacroDown(hWnd, str_get);
+			break;
+		}
+
 		/*判断当前按键是否与上一按键相同 即处于长按状态*/
 		if (TeamKey_Index >= 0 && strcmp(TeamKey[TeamKey_Index], str_get) == 0)
 			break;
+
 		else
 		{
 			/*判断之前按键是否还处于按下状态*/
@@ -955,9 +973,9 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		HWND hl = CreateWindowEx(0, _T("static"), NULL, WS_CHILD, x, y - 2, AvailableWidth / 2, edit_out_h + 4, hWnd, (HMENU)(IDC_MODELEFTBORDER), ((LPCREATESTRUCT)lParam)->hInstance, NULL);
 		HWND hr = CreateWindowEx(0, _T("static"), NULL, WS_BORDER | WS_CHILD, x + AvailableWidth / 2, y - 2, AvailableWidth / 2, edit_out_h + 4, hWnd, (HMENU)(IDC_MODERIGHTBORDER), ((LPCREATESTRUCT)lParam)->hInstance, NULL);
 		CreateWindowEx(0, L"STATIC", L"模\n\n式", WS_CHILD | WS_VISIBLE | ES_CENTER, (AvailableWidth - 20) / 2 + def_x, y - 10, 20, 60, hWnd, (HMENU)IDC_GeneralText, ((LPCREATESTRUCT)lParam)->hInstance, NULL);
-		x += 2;
+		x += 20;
 		RadioBox.IDC[++RadioBox.last] = CreateWindowEx(0, L"BUTTON", L"按住运行", WS_CHILD | WS_VISIBLE | BS_AUTORADIOBUTTON | WS_GROUP, x, y, w, h, hWnd, (HMENU)1007, ((LPCREATESTRUCT)lParam)->hInstance, NULL);
-		x += (AvailableWidth - w - 4);
+		x += (AvailableWidth - w - 24);
 		RadioBox.IDC[++RadioBox.last] = CreateWindowEx(0, L"BUTTON", L"切换运行", WS_CHILD | WS_VISIBLE | BS_AUTORADIOBUTTON, x, y, w, h, hWnd, (HMENU)1008, ((LPCREATESTRUCT)lParam)->hInstance, NULL);
 
 
@@ -1110,13 +1128,14 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		{
 			//HWND hWnd_bro = GetDlgItem(hWnd, IDC_LOCKASYNC);
 			//HDC hdc_bro = GetDC(hWnd_bro);
-			rColor = RGB(67, 205, 128);//RGB(248, 248, 255);
-			//SetBkColor(hdc_bro, rColor);
-			//ReleaseDC(hWnd_bro, hdc_bro);
 
-			//rColor = RGB(248, 0, 0);
-			SetBkColor(hdc, rColor);
+			rColor = RGB(67, 205, 128);//RGB(248, 248, 255);
+		//SetBkColor(hdc_bro, rColor);
+		//ReleaseDC(hWnd_bro, hdc_bro);
+
+		//rColor = RGB(248, 0, 0);
 			hbrush = CreateSolidBrush(rColor);
+			SetBkColor(hdc, rColor);
 
 			char mmp[] = "同\n\n步";
 			SelectObject(hdc, ChFont);
@@ -1151,14 +1170,15 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		{
 			//HWND hWnd_bro = GetDlgItem(hWnd, IDC_LOCKSYNC);
 			//HDC hdc_bro = GetDC(hWnd_bro);
+
 			rColor = RGB(67, 205, 128);//RGB(248, 248, 255);
 			//SetBkColor(hdc_bro, rColor);
 			//ReleaseDC(hWnd_bro, hdc_bro);
 
 
+			hbrush = CreateSolidBrush(rColor);
 			SetBkColor(hdc, rColor);
 			//rColor = RGB(248, 0, 0);
-			hbrush = CreateSolidBrush(rColor);
 
 			char mmp[] = "异\n\n步";
 			SelectObject(hdc, ChFont);
@@ -1377,6 +1397,7 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		}
 		/*预载与载入 按钮控件 end*/
 
+
 		switch (low)
 		{
 		case IDC_UpBTN:
@@ -1454,15 +1475,11 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			lock = 0;
 
 			SetWindowTextA(GetDlgItem(hWnd, IDC_ASYNCORSYNCHINT), "-异步-");
-			//RECT rc;
-			//HWND hbox = GetDlgItem(hWnd, IDC_LOCKSYNC);
-			//GetClientRect(hbox, &rc);
-			//InvalidateRect(hWnd, &rc, true);
-			//UpdateWindow(hWnd);
 			break;
 		}
 
 		case IDC_SAVEFILEBTN:/*保存*/
+
 		{
 			int flag = GetSaveFileNameA(&op);
 			if (flag)//保存(1)-取消(0)
@@ -1470,17 +1487,6 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				if (savedatatolocal())
 					MessageBox(hWnd, _T("保存成功"), _T("提示"), 0);
 				else MessageBox(hWnd, _T("没有数据需要保存"), _T("错误"), 0);
-
-				//ofstream fout(op.lpstrFile);
-				//fout << "123" << endl;
-				//fout << "456" << endl;
-				//fout.close();
-				//SetWindowText(hWnd, _T("123"));
-			}
-			else
-			{
-
-				//SetWindowText(hWnd, _T("456"));
 			}
 			break;
 		}
@@ -1528,16 +1534,6 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		break;
 	}
 
-	//case WM_SETFOCUS:
-	//{
-	//    // MessageBox(hWnd,TEXT("in"),NULL,MB_OK);
-	//    HWND nowhWnd = GetFocus();
-	//    SetWindowText(nowhWnd, _T("123"));
-	//    break;
-	//}
-	//case BM_GETCHECK:
-	//	MessageBox(hWnd, TEXT("in"), NULL, MB_OK);
-	//	break;
 
 
 	/*热键消息*/
@@ -1655,6 +1651,90 @@ int Pressed_Key_Name(int VK_CODE, char* getname)
 	case VK_DOWN:         //0x28
 		sprintf_s(getname, size, "%s", "Down");
 		return 0;
+	case VK_MULTIPLY:	//106	小键盘 *
+		sprintf_s(getname, size, "%s", "*");
+		return 0;
+	case VK_ADD:	//107	小键盘 +
+		sprintf_s(getname, size, "%s", "+");
+		return 0;
+	case VK_SEPARATOR://	108	小键盘 Enter
+		sprintf_s(getname, size, "%s", "enter");
+		return 0;
+	case VK_SUBTRACT://	109	小键盘 -
+		sprintf_s(getname, size, "%s", "-");
+		return 0;
+	case VK_DECIMAL://	110	小键盘 .
+		sprintf_s(getname, size, "%s", ".");
+		return 0;
+	case VK_DIVIDE://	111	小键盘 /
+		sprintf_s(getname, size, "%s", "/");
+		return 0;
+	case VK_NUMLOCK://144 Num Lock
+		sprintf_s(getname, size, "%s", "Num");
+		return 0;
+	case VK_OEM_1://	186; :
+		sprintf_s(getname, size, "%s", ";:");
+		return 0;
+	case VK_OEM_PLUS://	187 = +
+		sprintf_s(getname, size, "%s", "=+");
+		return 0;
+	case VK_OEM_COMMA://	188
+		sprintf_s(getname, size, "%s", ",<");
+		return 0;
+	case VK_OEM_MINUS://	189 - _
+		sprintf_s(getname, size, "%s", "-_");
+		return 0;
+	case VK_OEM_PERIOD://	190
+		sprintf_s(getname, size, "%s", ".>");
+		return 0;
+	case VK_OEM_2://	191 / ?
+		sprintf_s(getname, size, "%s", "/?");
+		return 0;
+	case VK_OEM_3://	192	` ~
+		sprintf_s(getname, size, "%s", "`~");
+		return 0;
+	case VK_OEM_4://	219[{
+		sprintf_s(getname, size, "%s", "[{");
+		return 0;
+	case VK_OEM_5://	220	\ |
+		sprintf_s(getname, size, "%s", "\\|");
+		return 0;
+	case VK_OEM_6://	221] }
+		sprintf_s(getname, size, "%s", "]}");
+		return 0;
+	case VK_OEM_7://222	' "
+		sprintf_s(getname, size, "%s", "\'\"");
+		return 0;
+	case VK_PAUSE:
+		sprintf_s(getname, size, "%s", "Pause");
+		return 0;
+	case VK_CAPITAL:
+		sprintf_s(getname, size, "%s", "CapsLk");
+		return 0;
+	case VK_ESCAPE:
+		sprintf_s(getname, size, "%s", "Esc");
+		return 0;
+	case VK_PRIOR:
+		sprintf_s(getname, size, "%s", "PgUp");
+		return 0;
+	case VK_NEXT:
+		sprintf_s(getname, size, "%s", "PgDn");
+		return 0;
+	case VK_END:
+		sprintf_s(getname, size, "%s", "End");
+		return 0;
+	case VK_HOME:
+		sprintf_s(getname, size, "%s", "Home");
+		return 0;
+	case VK_SNAPSHOT:
+		sprintf_s(getname, size, "%s", "PrtSc");
+		return 0;
+	case VK_INSERT:
+		sprintf_s(getname, size, "%s", "Ins");
+		return 0;
+	case VK_SCROLL:
+		sprintf_s(getname, size, "%s", "ScrLk");
+		return 0;
 	default:
 		break;
 	}
@@ -1724,6 +1804,82 @@ int Pressed_Key_VK(char* key_name)
 		return VK_RIGHT;
 	if (strcmp(key_name, "Down") == 0)
 		return VK_DOWN;
+
+	if (strcmp(key_name, "*") == 0)
+		return VK_MULTIPLY;//106	小键盘 *
+
+	if (strcmp(key_name, "+") == 0)
+		return VK_ADD;	//107	小键盘 +
+
+	if (strcmp(key_name, "enter") == 0)
+		return VK_SEPARATOR;//	108	小键盘 Enter
+
+	if (strcmp(key_name, "-") == 0)
+		return VK_SUBTRACT;//	109	小键盘 -
+
+	if (strcmp(key_name, ".") == 0)
+		return VK_DECIMAL;//	110	小键盘 .
+
+	if (strcmp(key_name, "/") == 0)
+		return VK_DIVIDE;//	111	小键盘 /
+
+	if (strcmp(key_name, "Num") == 0)
+		return VK_NUMLOCK;//144 Num Lock
+
+	if (strcmp(key_name, ";:") == 0)
+		return VK_OEM_1;//	186; :
+
+	if (strcmp(key_name, "=+") == 0)
+		return VK_OEM_PLUS;//	187 = +
+
+	if (strcmp(key_name, ",<") == 0)
+		return VK_OEM_COMMA;//	188
+
+	if (strcmp(key_name, "-_") == 0)
+		return VK_OEM_MINUS;//	189 - _
+
+	if (strcmp(key_name, ".>") == 0)
+		return VK_OEM_PERIOD;//	190
+
+	if (strcmp(key_name, "/?") == 0)
+		return VK_OEM_2;//	191 / ?
+
+	if (strcmp(key_name, "`~") == 0)
+		return VK_OEM_3;//	192	` ~
+
+	if (strcmp(key_name, "[{") == 0)
+		return VK_OEM_4;//	219[{
+
+	if (strcmp(key_name, "\\|") == 0)
+		return VK_OEM_5;//	220	\ |
+
+	if (strcmp(key_name, "]}") == 0)
+		return VK_OEM_6;//	221] }
+
+	if (strcmp(key_name, "\'\"") == 0)
+		return VK_OEM_7;//222	' "
+
+	if (strcmp(key_name, "Pause"))
+		return VK_PAUSE;
+	if (strcmp(key_name, "CapsLk"))
+		return VK_CAPITAL;
+	if (strcmp(key_name, "Esc"))
+		return VK_ESCAPE;
+	if (strcmp(key_name, "PgUp"))
+		return VK_PRIOR;
+	if (strcmp(key_name, "PgDn"))
+		return VK_NEXT;
+	if (strcmp(key_name, "End"))
+		return VK_END;
+	if (strcmp(key_name, "Home"))
+		return VK_HOME;
+	if (strcmp(key_name, "PrtSc"))
+		return VK_SNAPSHOT;
+	if (strcmp(key_name, "Ins"))
+		return VK_INSERT;
+	if (strcmp(key_name, "ScrLk"))
+		return VK_SCROLL;
+
 
 
 	/*0-9&A-Z*/
